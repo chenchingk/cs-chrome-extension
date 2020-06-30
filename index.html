@@ -1,12 +1,124 @@
 <!DOCTYPE html>
 <html>
+  <head>
+    <style>
+      html {
+        background: #bdc3c7; /* fallback for old browsers */
+        background: -webkit-linear-gradient(
+          to right,
+          #2c3e50,
+          #bdc3c7
+        ); /* Chrome 10-25, Safari 5.1-6 */
+        background: linear-gradient(
+          to right,
+          #2c3e50,
+          #bdc3c7
+        ); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+
+        font-family: 'Roboto', sans-serif;
+      }
+
+      h1 {
+        color: white;
+      }
+
+      .notes-form,
+      .notes-list {
+        display: flex;
+        justify-content: center;
+        list-style: none;
+        width: 100%;
+      }
+
+      .notes-list {
+        flex-direction: column;
+        align-items: left;
+        text-align: center;
+      }
+
+      li {
+        margin: 5px;
+      }
+
+      .notes-text-input {
+        height: 50px;
+        width: 100%;
+        max-width: 1216px;
+        overflow: auto;
+        text-align: top;
+        background-color: gray;
+        resize: none;
+      }
+
+      .notes-submit-btn {
+        background-color: lightslategray;
+        border: none;
+        width: 61px;
+      }
+
+      ::placeholder {
+        color: lightgrey;
+        opacity: 1;
+      }
+
+      .notes-text-input:focus {
+        background-color: white;
+        color: black;
+      }
+
+      .timeStamp {
+        font-size: 150%;
+        cursor: pointer;
+        font-style: italic;
+        margin-right: 5px;
+      }
+    </style>
+  </head>
   <body>
-    <!-- 1. The <iframe> (and video player) will replace this <div> tag. -->
-    <div id="player"></div>
+    <center><h1>Welcome to Zen Note</h1></center>
+    <center><div id="player"></div></center>
+    <form class="notes-form">
+      <textarea
+        class="notes-text-input"
+        type="text"
+        rows="5"
+        placeholder="Type Notes Here"
+      ></textarea>
+      <input class="notes-submit-btn" type="submit" />
+    </form>
+
+    <div class="notes-container">
+      <ul class="notes-list"></ul>
+    </div>
 
     <script>
-      // 2. This code loads the IFrame Player API code asynchronously.
       const vidURL = document.URL.substring(65);
+      let localStore = window.localStorage;
+      // localStore.clear();
+      console.log(localStore.getItem(vidURL));
+      console.log(localStore);
+
+      for (const span in localStore) {
+        if (
+          span !== 'length' &&
+          span !== 'key' &&
+          span !== 'getItem' &&
+          span !== 'setItem' &&
+          span !== 'removeItem' &&
+          span !== 'clear' &&
+          span.substring(0, 11) === vidURL
+        ) {
+          let oldItem = document.createElement('li');
+          oldItem.innerHTML = `${span.substring(11)}   ${localStore[span]}`;
+
+          document.querySelector('ul').append(oldItem);
+
+          let timeStamps = document.querySelectorAll('.timeStamp');
+          Array.from(timeStamps).forEach((el) => {
+            el.addEventListener('click', timeTrack);
+          });
+        }
+      }
 
       var tag = document.createElement('script');
 
@@ -14,39 +126,60 @@
       var firstScriptTag = document.getElementsByTagName('script')[0];
       firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
-      // 3. This function creates an <iframe> (and YouTube player)
-      //    after the API code downloads.
       var player;
       function onYouTubeIframeAPIReady() {
         player = new YT.Player('player', {
-          height: '390',
-          width: '640',
+          height: '720',
+          width: '1280',
           videoId: vidURL,
           events: {
-            onReady: onPlayerReady,
-            onStateChange: onPlayerStateChange,
+            onReady: function onPlayerReady(event) {
+              event.target.playVideo();
+            },
           },
         });
       }
 
-      // 4. The API will call this function when the video player is ready.
-      function onPlayerReady(event) {
-        event.target.playVideo();
+      function getTime() {
+        const seconds = player.getCurrentTime();
+        const minutes = Math.floor(seconds / 60);
+        let leftoverSeconds = `${Math.floor(seconds % 60)}`;
+
+        if (leftoverSeconds.length < 2) leftoverSeconds = `0${leftoverSeconds}`;
+        return `<span class="timeStamp" id=${seconds}>${minutes}:${leftoverSeconds}</span>`;
       }
 
-      // 5. The API calls this function when the player's state changes.
-      //    The function indicates that when playing a video (state=1),
-      //    the player should play for six seconds and then stop.
-      var done = false;
-      function onPlayerStateChange(event) {
-        if (event.data == YT.PlayerState.PLAYING && !done) {
-          setTimeout(stopVideo, 6000);
-          done = true;
-        }
+      function timeTrack(evt) {
+        player.seekTo(evt.target.id);
       }
-      function stopVideo() {
-        player.stopVideo();
+
+      function submitNote(evt) {
+        evt.preventDefault();
+        const newNote = document.querySelector('.notes-text-input').value;
+        document.querySelector('.notes-text-input').value = '';
+        const timeStamp = getTime();
+
+        document.querySelector(
+          '.notes-list'
+        ).innerHTML += `<li>${timeStamp}   ${newNote} </li>`;
+
+        localStorageSet(timeStamp, newNote);
+
+        let timeStamps = document.querySelectorAll('.timeStamp');
+        Array.from(timeStamps).forEach((el) => {
+          el.addEventListener('click', timeTrack);
+        });
       }
+
+      function localStorageSet(timeStamp, newNote) {
+        //create key based on current videoURL
+        //value will be object containing key/value pairs of timeStamp and newNote
+        localStore.setItem(`${vidURL}${timeStamp}`, `${newNote}`);
+      }
+
+      document
+        .querySelector('.notes-submit-btn')
+        .addEventListener('click', submitNote);
     </script>
   </body>
 </html>
