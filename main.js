@@ -1,5 +1,5 @@
 let videoPlayer = document.querySelectorAll('#player')[1];
-
+console.log(videoPlayer);
 let onButton = document.createElement('div');
 onButton.className = 'button';
 onButton.style.backgroundColor = 'gray';

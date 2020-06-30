@@ -44,6 +44,7 @@
         height: 50px;
         width: 100%;
         max-width: 1216px;
+        font-size: 130%;
         overflow: auto;
         text-align: top;
         background-color: gray;
@@ -67,10 +68,28 @@
       }
 
       .timeStamp {
-        font-size: 150%;
+        font-size: 80%;
         cursor: pointer;
         font-style: italic;
         margin-right: 5px;
+      }
+
+      li {
+        font-size: 120%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      li * {
+        margin: 1px 5px;
+      }
+
+      .delete-btn {
+        width: 25px;
+        height: 25px;
+        border-radius: 2rem;
+        box-shadow: none;
       }
     </style>
   </head>
@@ -95,9 +114,13 @@
       const vidURL = document.URL.substring(65);
       let localStore = window.localStorage;
       // localStore.clear();
-      console.log(localStore.getItem(vidURL));
-      console.log(localStore);
+      // console.log(localStore.getItem(vidURL));
+      // console.log(localStore);
 
+      //iterate over localStore and put old notes onto DOM
+      //each key in localStore is a unique ID string combining
+      //the html code for the span and the timestamp in seconds
+      //when the note was created
       for (const span in localStore) {
         if (
           span !== 'length' &&
@@ -109,9 +132,16 @@
           span.substring(0, 11) === vidURL
         ) {
           let oldItem = document.createElement('li');
-          oldItem.innerHTML = `${span.substring(11)}   ${localStore[span]}`;
+          oldItem.innerHTML = `<button class="delete-btn">X</button>${span.substring(
+            11
+          )}   ${localStore[span]}`;
 
           document.querySelector('ul').append(oldItem);
+
+          let deleteBtns = document.querySelectorAll('.delete-btn');
+          Array.from(deleteBtns).forEach((el) => {
+            el.addEventListener('click', deleteNote);
+          });
 
           let timeStamps = document.querySelectorAll('.timeStamp');
           Array.from(timeStamps).forEach((el) => {
@@ -120,8 +150,18 @@
         }
       }
 
-      var tag = document.createElement('script');
+      function deleteNote(evt) {
+        //delete the li that the button is attached to
+        //then delete from local storage
+        evt.target.parentNode.remove();
+        const deletedKey = evt.target.parentNode.innerHTML.substring(37, 87);
+        console.log(deletedKey);
+        localStore.removeItem(`${vidURL}${deletedKey}`);
+        console.log(localStore);
+      }
 
+      //youtube API setup
+      var tag = document.createElement('script');
       tag.src = 'https://www.youtube.com/iframe_api';
       var firstScriptTag = document.getElementsByTagName('script')[0];
       firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
@@ -140,13 +180,15 @@
         });
       }
 
+      //returns a span with a unique ID based on the timestamp of the video when user comments
       function getTime() {
         const seconds = player.getCurrentTime();
-        const minutes = Math.floor(seconds / 60);
+        let minutes = `${Math.floor(seconds / 60)}`;
         let leftoverSeconds = `${Math.floor(seconds % 60)}`;
 
+        if (minutes.length < 2) minutes = `0${minutes}`;
         if (leftoverSeconds.length < 2) leftoverSeconds = `0${leftoverSeconds}`;
-        return `<span class="timeStamp" id=${seconds}>${minutes}:${leftoverSeconds}</span>`;
+        return `<span class="timeStamp" id="${seconds}">${minutes}:${leftoverSeconds}</span>`;
       }
 
       function timeTrack(evt) {
@@ -161,9 +203,14 @@
 
         document.querySelector(
           '.notes-list'
-        ).innerHTML += `<li>${timeStamp}   ${newNote} </li>`;
+        ).innerHTML += `<li><button class="delete-btn">X</button>${timeStamp}   ${newNote} </li>`;
 
         localStorageSet(timeStamp, newNote);
+
+        let deleteBtns = document.querySelectorAll('.delete-btn');
+        Array.from(deleteBtns).forEach((el) => {
+          el.addEventListener('click', deleteNote);
+        });
 
         let timeStamps = document.querySelectorAll('.timeStamp');
         Array.from(timeStamps).forEach((el) => {
