@@ -6,6 +6,8 @@
 
     <script>
       // 2. This code loads the IFrame Player API code asynchronously.
+      const vidURL = document.URL.substring(65);
+
       var tag = document.createElement('script');
 
       tag.src = 'https://www.youtube.com/iframe_api';
@@ -19,7 +21,7 @@
         player = new YT.Player('player', {
           height: '390',
           width: '640',
-          videoId: 'M7lc1UVf-VE',
+          videoId: vidURL,
           events: {
             onReady: onPlayerReady,
             onStateChange: onPlayerStateChange,
